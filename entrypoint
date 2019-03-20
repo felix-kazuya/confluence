@@ -10,6 +10,10 @@ sed -i "s/PlaceholderAppHTTPPort/$SERVERPORT/g" $INSTALL/conf/server.xml
 sed -i "s/PlaceholderAppHTTPSPort/$HTTPSSERVERPORT/g" $INSTALL/conf/server.xml
 sed -i "s/PlaceholderAppAJPPort/$AJPPORT/g" $INSTALL/conf/server.xml
 
+sed -i '/^JAVA_HOME=/d' $INSTALL/bin/setenv.sh
+sed -i '/^JRE_HOME=/d' /opt/atlassian/confluence/bin/setjre.sh 
+JRE_HOME=${JAVA_HOME}
+
 #set +e
 if ! [ -z $PROXY ] ; then
 
