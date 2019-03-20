@@ -1,0 +1,85 @@
+#!/bin/bash
+set -e
+
+INSTALL=$INSTALLDIR
+
+_user=$(grep "CONF_USER=" $INSTALL/bin/user.sh | awk -F'=' '{print $2}' | awk '{print $1}' | awk -F'"' '{print $2}')
+_workdir=$(grep ^confluence.home $INSTALL/confluence/WEB-INF/classes/confluence-init.properties  | awk '{ print $3 }')
+
+sed -i "s/PlaceholderAppHTTPPort/$SERVERPORT/g" $INSTALL/conf/server.xml
+sed -i "s/PlaceholderAppHTTPSPort/$HTTPSSERVERPORT/g" $INSTALL/conf/server.xml
+sed -i "s/PlaceholderAppAJPPort/$AJPPORT/g" $INSTALL/conf/server.xml
+
+#set +e
+if ! [ -z $PROXY ] ; then
+
+  # Split to get protocol and fqdn
+  proto="$(echo $PROXY | grep :// | sed -e's,^\(.*://\).*,\1,g' | cut -d':' -f1)"
+  # default to https
+  if [ -z $proto ] ; then
+    proto=https
+  fi
+  # remove the protocol
+  url=$(echo $PROXY | sed -e "s,^$proto://,,")
+
+  case $proto in
+    http)
+      port=80
+    ;;
+    https)
+      port=443
+    ;;
+    *)
+      echo "Protocol $proto not supported. Only http and https are valid!"
+      exit 1
+    ;;
+  esac
+
+  # We support proxy only with HTTP and not AJP
+  echo "server.xml: Deleting AJP connector since PROXY is set to $PROXY and AJP is not supported"
+  xmlstarlet ed -P -S -L --delete "//Connector[@port=9080]" $INSTALL/conf/server.xml
+
+  echo "server.xml: Updating proxyName, proxyPort and scheme in //Connector"
+  xmlstarlet ed -P -S -L --insert "//Connector[not(@proxyName)]" --type attr -n proxyName --value "$url" $INSTALL/conf/server.xml
+  xmlstarlet ed -P -S -L --insert "//Connector[not(@proxyPort)]" --type attr -n proxyPort --value "$port" $INSTALL/conf/server.xml
+  xmlstarlet ed -P -S -L --insert "//Connector[not(@scheme)]" --type attr -n scheme --value "$proto" $INSTALL/conf/server.xml
+
+  if [[ $proto == "https" ]] ; then
+    echo "context.xml: Updating Rewrite Valve in /Context because of SSL proxy"
+    xmlstarlet ed -P -S -L -s /Context -t elem -n ValveTMP -v "" -i //ValveTMP -t attr -n "className" -v "org.apache.catalina.valves.rewrite.RewriteValve"  -r //ValveTMP -v Valve $INSTALL/conf/context.xml
+    echo "rewrite.config: Enabling rewrites"
+    # symbolic links to not work here, so we just copy it
+    cp $INSTALL/ext/rewrite.config $INSTALL/atlassian-confluence/WEB-INF/rewrite.config
+  fi
+
+fi
+echo "hallo"
+
+###  Generate SSL certificate
+# Remove current keystore
+rm -f $INSTALL/confluence/.keystore
+
+# Generate random password for private key
+keystorePassword=$(openssl rand 16 | base64)
+echo ".keystore: Generate new keystore for https"
+keytool -genkey -noprompt \
+  -alias localhost \
+  -dname "CN=localhost, OU=unknown, O=unknown, L=unknown, S=unknown, C=DE" \
+  -keystore $INSTALL/atlassian-confluence.keystore \
+  -storepass "$keystorePassword" \
+  -keypass "$keystorePassword" \
+  -keyalg RSA \
+  -keysize 2048 \
+  -validity 365 \
+  -deststoretype pkcs12
+  
+echo "server.xml: Updating keystorePass with new value"
+xmlstarlet ed -P -S -L --update "//Connector[(@keystorePass)]/@keystorePass" --value "$keystorePassword" $INSTALL/conf/server.xml
+echo "server.xml: Updating keyAlias with localhost"
+xmlstarlet ed -P -S -L --update "//Connector[(@keyAlias)]/@keyAlias" --value localhost $INSTALL/conf/server.xml
+
+set -e
+chown -R $_user:$_user $_workdir
+
+$INSTALL/bin/start-confluence.sh -fg
+
