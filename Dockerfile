@@ -28,12 +28,14 @@ echo "sys.installationDir=$INSTALLDIR">>response.varfile && \
 echo "app.confHome=/var/atlassian/confluence">>response.varfile && \
 echo "executeLauncherAction$Boolean=true">>response.varfile && \
 echo "httpPort\$Long=$SERVERPORT">>response.varfile && \
-echo "portChoice=default">>response.varfile
+echo "portChoice=default">>response.varfile && \
+./$VERSION -q -varfile response.varfile && \
+ln -n /usr/share/java/mysql-connector-java.jar $INSTALLDIR/lib/mysql-connector-java.jar && \
+rm $VERSION
 
 
-RUN ./$VERSION -q -varfile response.varfile && \
-ln -n /usr/share/java/mysql-connector-java.jar $INSTALLDIR/lib/mysql-connector-java.jar
-
+RUN mkdir -p  $INSTALLDIR/ext
+COPY files/rewrite.config $INSTALLDIR/ext/rewrite.config
 
 EXPOSE $SERVERPORT $HTTPSSERVERPORT $AJPSERVERPORT
 
