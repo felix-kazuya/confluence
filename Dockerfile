@@ -33,7 +33,7 @@ echo "portChoice=default">>response.varfile && \
 ln -n /usr/share/java/mysql-connector-java.jar $INSTALLDIR/lib/mysql-connector-java.jar && \
 rm $VERSION
 
-
+COPY files/server.xml $INSTALLDIR/conf/server.xml
 RUN mkdir -p  $INSTALLDIR/ext
 COPY files/rewrite.config $INSTALLDIR/ext/rewrite.config
 
