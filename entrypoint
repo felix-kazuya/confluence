@@ -53,7 +53,7 @@ if ! [ -z $PROXY ] ; then
     xmlstarlet ed -P -S -L -s /Context -t elem -n ValveTMP -v "" -i //ValveTMP -t attr -n "className" -v "org.apache.catalina.valves.rewrite.RewriteValve"  -r //ValveTMP -v Valve $INSTALL/conf/context.xml
     echo "rewrite.config: Enabling rewrites"
     # symbolic links to not work here, so we just copy it
-    cp $INSTALL/ext/rewrite.config $INSTALL/atlassian-confluence/WEB-INF/rewrite.config
+    cp $INSTALL/ext/rewrite.config $INSTALL/confluence/WEB-INF/rewrite.config
   fi
 
 fi
