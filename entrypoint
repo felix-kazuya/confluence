@@ -62,6 +62,7 @@ echo "hallo"
 ###  Generate SSL certificate
 # Remove current keystore
 rm -f $INSTALL/confluence/.keystore
+rm -f $INSTALL/atlassian-confluence.keystore
 
 # Generate random password for private key
 keystorePassword=$(openssl rand 16 | base64)
