@@ -8,7 +8,7 @@ RUN apt-get update && apt-get install graphviz
 
 ARG INSTALLDIR=/opt/atlassian/confluence
 ENV INSTALLDIR=${INSTALLDIR}
-ARG VERSION=atlassian-confluence-6.15.1-x64.bin
+ARG VERSION=atlassian-confluence-6.15.2-x64.bin
 ARG DOWNLOADPATH=https://www.atlassian.com/software/confluence/downloads/binary
 ARG SERVERPORT=8080
 ENV SERVERPORT=${SERVERPORT}
