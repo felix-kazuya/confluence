@@ -4,7 +4,7 @@ FROM $IMAGE:$TAG
 MAINTAINER Christian Walonka <christian@walonka.de>
 MAINTAINER Christian Walonka <cwalonka@it-economics.de>
 
-RUN apt-get update && apt-get install graphviz 
+RUN apt-get update && apt-get install -y graphviz 
 
 ARG INSTALLDIR=/opt/atlassian/confluence
 ENV INSTALLDIR=${INSTALLDIR}
