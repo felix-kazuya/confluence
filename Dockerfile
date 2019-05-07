@@ -4,6 +4,8 @@ FROM $IMAGE:$TAG
 MAINTAINER Christian Walonka <christian@walonka.de>
 MAINTAINER Christian Walonka <cwalonka@it-economics.de>
 
+RUN apt-get update && apt-get install graphviz 
+
 ARG INSTALLDIR=/opt/atlassian/confluence
 ENV INSTALLDIR=${INSTALLDIR}
 ARG VERSION=atlassian-confluence-6.15.1-x64.bin
